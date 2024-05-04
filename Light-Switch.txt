@@ -1,0 +1,54 @@
+// Code to insert into a template esphome device (pre configured)
+
+
+output:
+  - platform: ledc
+    id: pwm_output
+    pin: 32
+    frequency: 50 Hz
+
+servo:
+  - id: my_servo
+    output: pwm_output
+
+globals:
+  - id: servo_position
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+binary_sensor:
+  - platform: template
+    name: "Light State"
+    id: light_state
+    lambda: |-
+      if (id(servo_position) == 90) {
+        return true;
+      } else {
+        return false;
+      }
+
+switch:
+  - platform: template
+    name: "Servo Switch"
+    id: my_switch
+    turn_on_action:
+      - servo.write:
+          id: my_servo
+          level: 100%
+      - globals.set:
+          id: servo_position
+          value: '90'
+      - binary_sensor.template.publish:
+          id: light_state
+          state: ON
+    turn_off_action:
+      - servo.write:
+          id: my_servo
+          level: 0.5%
+      - globals.set:
+          id: servo_position
+          value: '0'
+      - binary_sensor.template.publish:
+          id: light_state
+          state: OFF
